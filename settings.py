@@ -11,7 +11,7 @@ def init():
     global save_every
     global lr
 
-    T = 200
+    T = 1000
     image_size = 128
     batch_size = 64
     dir_path = '/vast/work/public/ml-datasets/imagenet'
