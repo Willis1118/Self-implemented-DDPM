@@ -31,7 +31,7 @@ Other variance scheduling methods are free to explore.
 
 To be implemented
 
-## Distributed Learning
+## Distributed Training
 
 By running
 
