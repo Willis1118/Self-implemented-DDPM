@@ -131,7 +131,7 @@ if __name__ == "__main__":
     device = rank % torch.cuda.device_count()
     set_random_seed(rank)
     torch.cuda.set_device(device)
-    print(f"Starting rank={rank}, seed = {rank}, world_size={dist.get_world_size()}, learning_rate={settings.lr}.")
+    print(f"Starting rank={rank}, seed = {rank}, world_size={dist.get_world_size()}.")
 
     sample_dir = ""
 
@@ -146,6 +146,7 @@ if __name__ == "__main__":
         os.makedirs(sample_dir, exist_ok=True)
 
         logger = create_logger(experiment_dir)
+        logger.info(f"learning_rate={settings.lr}, sampling_steps={settings.T}")
     else:
         logger = create_logger(None)
     

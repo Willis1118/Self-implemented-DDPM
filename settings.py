@@ -17,5 +17,5 @@ def init():
     dir_path = '/vast/work/public/ml-datasets/imagenet'
     epochs = 10
     save_every = 5000
-    lr = 5e-4
+    lr = 2e-4
 
