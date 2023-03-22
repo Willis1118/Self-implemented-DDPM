@@ -23,6 +23,7 @@ import numpy as np
 import settings
 from diffuse import plot_noisy_img, get_noisy_image, q_sample, sample
 from model import Unet
+from diffusers.models import AutoencoderKL
 
 def get_transform():
     return transforms.Compose([
@@ -149,11 +150,15 @@ if __name__ == "__main__":
         logger.info(f"learning_rate={settings.lr}, sampling_steps={settings.T}")
     else:
         logger = create_logger(None)
+
+    # introduce vae
+    vae = AutoencoderKL.from_pretrained(f"stabilityai/sd-vae-ft-ema").to(device) # output [4, 16, 16]
     
     model = Unet(
         dim=image_size,
         init_dim=image_size,
-        use_convnext=False
+        use_convnext=False,
+        channels=4,
     )
 
     model = DDP(model.to(device), device_ids=[rank])
@@ -206,6 +211,9 @@ if __name__ == "__main__":
             batch = batch.to(device)
 
             optimizer.zero_grad()
+            with torch.no_grad():
+                # map input images to latent space + normalize latents (following DiT)
+                batch = vae.encode(batch).latent_dist.sample().mul_(0.18215)
 
             # following algo 1 line 3, uniformly sample timestep for each example in the batch
             t = torch.randint(0, settings.T, (batch.shape[0], ), device=device).long()
@@ -241,6 +249,7 @@ if __name__ == "__main__":
                 milestone = train_steps // settings.save_every
                 all_imgs_list = sample(model, image_size, batch_size=batch_size, channels=3)
                 all_imgs_list = (all_imgs_list[-1][:64] + 1) * 0.5
+                all_imgs_list = vae.decode(all_imgs_list / 0.18125).sample
                 save_image(all_imgs_list, str(f'{sample_dir}/sample-{milestone}.png'), nrow=8)
                 logger.info("========== Sampling Done ==========")
 

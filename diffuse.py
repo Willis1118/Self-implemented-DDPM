@@ -136,6 +136,7 @@ def q_sample(x_start, t, noise=None):
     # where noise is standard Gaussian noise
     return sqrt_alphas_cumprod_t * x_start + sqrt_minus_alphas_cumprod * noise 
 
+@torch.compile
 @torch.no_grad()
 def p_sample(model, x, t, t_index):
     '''
@@ -171,6 +172,7 @@ def p_sample(model, x, t, t_index):
         noise = torch.randn_like(x)
         return model_mean + torch.sqrt(posterior_var_t) * noise
 
+@torch.compile
 @torch.no_grad()
 def p_sample_loop(model, shape):
     device = next(model.parameters()).device
@@ -186,7 +188,7 @@ def p_sample_loop(model, shape):
         imgs.append(img)
     return imgs
 
-
+@torch.compile
 @torch.no_grad()
 def sample(model, image_size, batch_size=16, channels=3):
     return p_sample_loop(model, shape=(batch_size, channels, image_size, image_size))

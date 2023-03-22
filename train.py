@@ -13,6 +13,7 @@ from torch.utils.data import DataLoader
 import settings
 from diffuse import plot_noisy_img, get_noisy_image, q_sample, sample
 from model import Unet
+from diffusers.models import AutoencoderKL
 
 def get_transform():
     return transforms.Compose([
@@ -89,9 +90,11 @@ if __name__ == '__main__':
     model = Unet(
         dim=settings.image_size,
         init_dim=settings.image_size,
-        use_convnext=False
+        use_convnext=False,
     )
     model.to(device)
+
+    vae = AutoencoderKL.from_pretrained(f"stabilityai/sd-vae-ft-ema").to(device)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 
@@ -105,6 +108,10 @@ if __name__ == '__main__':
             batch = batch.to(device)
 
             optimizer.zero_grad()
+
+            with torch.no_grad():
+                # map input images to latent space + normalize latents (following DiT)
+                batch = vae.encode(batch).latent_dist.sample().mul_(0.18215)
 
             # following algo 1 line 3, uniformly sample timestep for each example in the batch
             t = torch.randint(0, settings.T, (batch.shape[0], ), device=device).long()
